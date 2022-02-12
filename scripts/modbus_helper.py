@@ -252,3 +252,23 @@ class ModbusTCPClient:
 		combined_responses = self.combine_tag_responses(all_interpreted_responses)
 		print('\t[INFO] combined_responses =', str(combined_responses))
 		return combined_responses
+
+	def pretty_print_interpreted_response(self, to_print, max_items_per_line=5):
+		headers = list(to_print.keys())		
+		header_max_length = max([len(str(h)) for h in headers])		
+		#print(' | '.join(str(x) for x in [h.ljust(header_max_length) for h in headers]))
+		values = list(to_print.values())
+		value_max_length = max([len(str(v)) for v in values])
+		max_length = max(header_max_length,value_max_length)
+
+		headers_padded = [h.ljust(max_length) for h in headers]
+		values_padded = [str(v).ljust(max_length) for v in values]
+		
+		for i in range(0,len(headers_padded),max_items_per_line):			
+			header_line = ' | '.join(str(x) for x in headers_padded[i:i+max_items_per_line])
+			value_line = ' | '.join(str(v) for v in values_padded[i:i+max_items_per_line])
+			sep_line = '-'.ljust(len(header_line),'-')
+			print(header_line)
+			print(value_line)
+			print(sep_line)
+		print('')
