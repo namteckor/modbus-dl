@@ -1,4 +1,4 @@
-import os, socket, datetime, math
+import os, sys, socket, datetime, time, math, json, signal
 from umodbus.client import tcp
 from data_helper import DataHelper
 
@@ -131,28 +131,145 @@ class ModbusHelper(object):
 
 		return call_groups, interpreter_helper
 
+	@classmethod
+	def parse_json_config(cls, full_path_to_modbus_config_json):
+		with open(full_path_to_modbus_config_json) as json_file:
+			config = json.load(json_file)
+		json_file.close()
+		
+		# perform input validation
+		for key in config:
+			key_value = config[key]
+
+			# for keys/values that should be entered as string
+			if key in ['server_ip']:
+				if not isinstance(key_value,str):
+					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+					print('\t[ERROR] value of key "'+str(key)+'" should be of type "string" (str)')
+					print('\t[ERROR] current type of value for key "'+str(key)+'" is',type(key_value),'and current value is config["'+str(key)+'"] =',str(key_value))
+					return
+				# check for valid IP address format and content
+				if key == 'server_ip':					
+					if key_value in ['localhost','Localhost','LocalHost','LOCALHOST','Local Host','LOCAL HOST','local host']:
+						config[key] = 'localhost'
+						continue
+					else:
+						key_value_split = key_value.split('.')
+						if not (len(key_value_split) == 4):
+							print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+							print('\t[ERROR] incorrect IPv4 address format provided:',str(key_value))
+							print('\t[ERROR] please provide a valid IPv4 address format A.B.C.D with A, B, C, and D in range [0,255]')
+							return
+						else:
+							for octet in key_value_split:
+								if not octet.isnumeric():
+									print(octet,type(octet))
+									print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+									print('\t[ERROR] incorrect IPv4 address format provided:',str(key_value))
+									print('\t[ERROR] octet "'+str(octet)+'" is not convertible to type int')
+									print('\t[ERROR] please provide a valid IPv4 address format A.B.C.D with A, B, C, and D in range [0,255]')
+									return
+								elif (int(octet) < 0) or (int(octet) > 255):
+									print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+									print('\t[ERROR] incorrect IPv4 address provided:',str(key_value))
+									print('\t[ERROR] octet "'+str(octet)+'" shall be in range [0,255]')
+									print('\t[ERROR] please provide a valid IPv4 address format A.B.C.D with A, B, C, and D in range [0,255]')
+									return
+
+			# for keys/values that should be entered as integer
+			elif key in ['server_port','server_id','in_memory_records']:
+				if not isinstance(key_value,int):
+					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+					print('\t[ERROR] value of key "'+str(key)+'" should be of type "integer" (int)')
+					print('\t[ERROR] current type of value for key "'+str(key)+'" is',type(key_value),'and current value is config["'+str(key)+'"] =',str(key_value))
+					return
+				# check for valid TCP port range
+				if key == 'server_port':
+					if not (key_value in range(1,65536)):
+						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+						print('\t[ERROR] invalid TCP port "'+str(key_value)+'" out of valid range [1,65535] for TCP ports')
+						return
+					elif key_value not in [502,503]:
+						print('\t[WARNING] "server_port" from config file not in common Modbus TCP port list [502,503]:',str(key_value),'\n')
+						continue
+				elif key == 'server_id':
+					if not (key_value in range(0,256)):
+						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+						print('\t[ERROR] invalid server ID "'+str(key_value)+'" out of valid range [0,255]')
+						return
+				elif key == 'in_memory_records':
+					if not key_value > 0:
+						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+						print('\t[ERROR] for key "'+str(key)+'", please provide a strictly positive value > 0 (0 not allowed!)')
+						print('\t[ERROR] current value provided is',str(key_value))
+						return
+
+			# for keys/values that should be entered as either integer or float
+			elif key in ['poll_interval_seconds']:
+				if not (isinstance(key_value,int) or isinstance(config[key],float)):
+					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+					print('\t[ERROR] value of key "'+str(key)+'" should be of type "integer" (int) or "float" (float)')
+					print('\t[ERROR] current type of value for key "'+str(key)+'" is',type(key_value),'and current value is config["'+str(key)+'"] =',str(key_value))
+					return
+
+			# for keys/values that should be entered as dictionary
+			elif key in ['file_rotation']:
+				if not isinstance(key_value,dict):
+					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+					print('\t[ERROR] value of key "'+str(key)+'" should be of type "dictionary" (dict)')
+					print('\t[ERROR] current type of value for key "'+str(key)+'" is',type(key_value),'and current value is config["'+str(key)+'"] =',str(ckey_value))
+					return
+				# for keys/values that should be entered as integer
+				for sub_key in key_value:
+					sub_key_value = config[key][sub_key]
+					if sub_key in ['max_file_records']:
+						if not isinstance(sub_key_value,int):
+							print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+							print('\t[ERROR] value of sub_key "'+str(sub_key)+'" should be of type "integer" (int)')
+							print('\t[ERROR] current type of value for sub_key "'+str(sub_key)+'" is',type(sub_key_value),'and current value is config["'+str(key)+'"]["'+str(sub_key)+'"] =',str(sub_key_value))
+							return
+					if sub_key == 'max_file_records':
+						if not (sub_key_value > 0):
+							print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+							print('\t[ERROR] value of sub_key "'+str(sub_key)+'" should be an integer >= 1')
+							print('\t[ERROR] current value for sub_key "'+str(sub_key)+'" is',str(sub_key_value))
+							return
+		return config
+
 class ModbusTCPClient:
-	def __init__(self, server_ip=None, server_port=502, server_id=1, poll_interval=1):
+	def __init__(self, server_ip=None, server_port=None, server_id=None, poll_interval_seconds=None):
 		if server_ip is None:
 			print('\t[ERROR] no server_ip argument provided to ModbusTCPClient instance')
-			print('\t[ERROR] server_port, server_id and poll_interval arguments will default to 502, 1 and 1 second respectively if not specified')
-			print('\t[ERROR] at a minimum, the ModbusTCPClient should know which IP to connect to')
+			print('\t[ERROR] server_port, server_id and poll_interval_seconds arguments will default to 502, 1, and 1 second respectively if not specified')
+			print('\t[ERROR] at a minimum, the ModbusTCPClient should know which IP address to connect to')
 			print('\t[ERROR] here are some examples:')
 			print('\t[ERROR]\t\tmy_tcp_client = ModbusTCPClient("10.1.10.30")\t# connect to Modbus TCP Server @ 10.1.10.30 on default port 502 and with default ID 1')
-			print('\t[ERROR]\t\tmy_tcp_client = ModbusTCPClient(server_ip="10.1.10.31", server_port=503, server_id=10, poll_interval=5)\t# connect to Modbus TCP Server @ 10.1.10.31 on port 503, with ID 10 and poll every 5 seconds')
+			print('\t[ERROR]\t\tmy_tcp_client = ModbusTCPClient(server_ip="10.1.10.31", server_port=503, server_id=10, poll_interval_seconds=5)\t# connect to Modbus TCP Server @ 10.1.10.31 on port 503, with ID 10 and poll every 5 seconds')
 			return
 		else:
 			self.modbus_tcp_server_ip_address = server_ip
+		default_server_port = ''
+		if server_port is None:
+			default_server_port = '(default)'
+			server_port = 502
 		self.modbus_tcp_server_port = server_port
+		default_server_id = ''
+		if server_id is None:
+			default_server_id = '(default)'
+			server_id = 1
 		self.modbus_tcp_server_id = server_id
-		self.poll_interval = poll_interval
+		default_poll_interval = ''
+		if poll_interval_seconds is None:
+			default_poll_interval = '(default)'
+			poll_interval_seconds = 1
+		self.poll_interval_seconds = poll_interval_seconds
 		self.call_groups = None
 		self.interpreter_helper = None
 		self.sock = None
 		print('\t[INFO] Client will attempt to connect to Modbus TCP Server at:\t\t\t',str(self.modbus_tcp_server_ip_address))
-		print('\t[INFO] Client will attempt to connect to Modbus TCP Server on port:\t\t',str(self.modbus_tcp_server_port))
-		print('\t[INFO] Client will attempt to connect to Modbus TCP Server with Modbus ID:\t',str(self.modbus_tcp_server_id))
-		print('\t[INFO] Client will attempt to poll the Modbus TCP Server every:\t\t\t',str(self.poll_interval)+' seconds')
+		print('\t[INFO] Client will attempt to connect to Modbus TCP Server on port:\t\t',str(self.modbus_tcp_server_port),default_server_port)
+		print('\t[INFO] Client will attempt to connect to Modbus TCP Server with Modbus ID:\t',str(self.modbus_tcp_server_id),default_server_id)
+		print('\t[INFO] Client will attempt to poll the Modbus TCP Server every:\t\t\t',str(self.poll_interval_seconds)+' seconds',default_poll_interval)
 
 	def load_template(self, full_path_to_modbus_template_csv=None):
 		if full_path_to_modbus_template_csv is None:
@@ -168,6 +285,9 @@ class ModbusTCPClient:
 		socket.setdefaulttimeout(timeout)
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)		
 		self.sock.connect((self.modbus_tcp_server_ip_address, self.modbus_tcp_server_port))
+
+	def disconnect(self):
+		self.sock.close()
 
 	def interpret_response(self, response, fc, start_address):
 		interpreted_response = {}
@@ -250,7 +370,7 @@ class ModbusTCPClient:
 				#print('\t[INFO] interpreted_response =', str(interpreted_response))
 				all_interpreted_responses.append(interpreted_response)
 		combined_responses = self.combine_tag_responses(all_interpreted_responses)
-		print('\t[INFO] combined_responses =', str(combined_responses))
+		#print('\t[INFO] combined_responses =', str(combined_responses))
 		return combined_responses
 
 	def pretty_print_interpreted_response(self, to_print, max_items_per_line=5):
@@ -264,11 +384,50 @@ class ModbusTCPClient:
 		headers_padded = [h.ljust(max_length) for h in headers]
 		values_padded = [str(v).ljust(max_length) for v in values]
 		
+		print('')
 		for i in range(0,len(headers_padded),max_items_per_line):			
 			header_line = ' | '.join(str(x) for x in headers_padded[i:i+max_items_per_line])
 			value_line = ' | '.join(str(v) for v in values_padded[i:i+max_items_per_line])
 			sep_line = '-'.ljust(len(header_line),'-')
-			print(header_line)
-			print(value_line)
-			print(sep_line)
+			print('\t',sep_line)
+			print('\t',header_line)
+			print('\t',value_line)
+		print('\t',sep_line)
 		print('')
+
+class ModbusTCPDataLogger:
+	def termination_signal_handler(self, signal, frame):
+		print('\nYou pressed Ctrl+C!')
+		self.modbus_tcp_client.disconnect()
+		print('Bye!')
+		time.sleep(2)
+		sys.exit(0)
+
+	def __init__(self, full_path_to_modbus_config_json=None, full_path_to_modbus_template_csv=None,quiet=False,log_file_type='csv'):
+		if full_path_to_modbus_config_json is None:
+			print('\t[ERROR] a Modbus config.json file is required for a ModbusTCPDataLogger instance')
+			print('\t[ERROR] please provide the full path to the Modbus config.json file')
+			return
+		if full_path_to_modbus_template_csv is None:
+			print('\t[ERROR] a Modbus template.csv file is required for a ModbusTCPDataLogger instance')
+			print('\t[ERROR] please provide the full path to the Modbus template.csv file')
+			return
+		self.modbus_config = ModbusHelper.parse_json_config(full_path_to_modbus_config_json)
+		self.modbus_tcp_client = ModbusTCPClient(
+				server_ip=self.modbus_config['server_ip'],
+				server_port=self.modbus_config['server_port'],
+				server_id=self.modbus_config['server_id'],
+				poll_interval_seconds=self.modbus_config['poll_interval_seconds']
+			)
+		self.modbus_tcp_client.load_template(full_path_to_modbus_template_csv)
+		self.modbus_tcp_client.connect()				
+
+		signal.signal(signal.SIGINT, self.termination_signal_handler)
+
+		print('Press Ctrl+C to stop and exit...')
+		while True:
+			modbus_poll_response = self.modbus_tcp_client.cycle_poll()
+			if not quiet:
+				self.modbus_tcp_client.pretty_print_interpreted_response(modbus_poll_response)
+				print('Press Ctrl+C to stop and exit...')
+			time.sleep(self.modbus_config['poll_interval_seconds'])

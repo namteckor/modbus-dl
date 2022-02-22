@@ -1,0 +1,11 @@
+{
+    "server_ip": "127.0.0.1",
+    "server_port": 502,
+    "server_id": 10,
+    "poll_interval_seconds": 1.0,
+    "in_memory_records": 10,
+    "file_rotation":
+        {
+            "max_file_records": 3600
+        }
+}
