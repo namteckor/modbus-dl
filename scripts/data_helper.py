@@ -125,3 +125,13 @@ class DataHelper(object):
    						record['column_'+str(col)] = item
    					lod.append(record)
     	return lod
+
+    # Method to export an in-memory Python list of dictionaries (lod) to a .csv file on the local file system
+    @classmethod
+    def lod_to_csv(cls, lod, full_path_to_csv_file):
+        keys = lod[0].keys()
+        with open(full_path_to_csv_file, 'w', newline='') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(lod)
+        output_file.close()

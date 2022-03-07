@@ -1,5 +1,6 @@
 import os, sys, socket, datetime, time, math, json, signal
 from umodbus.client import tcp
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from data_helper import DataHelper
 
 import pdb
@@ -8,7 +9,7 @@ class ModbusHelper(object):
 
 	FUNCTION_CODES = {
 		'01': ['1','01','FC01','coil','Coil','coils','Coils','RC','Coil-FC01'],			# function code 01: Read Coils
-		'02': ['2','02','FC02','discrete','Discrete','di','DI','RDI','DI-FC02'], 			# function code 02: Read Discrete Inputs
+		'02': ['2','02','FC02','discrete','Discrete','di','DI','RDI','DI-FC02'], 		# function code 02: Read Discrete Inputs
 		'03': ['3','03','FC03','holding','Holding','HR','RHR','HR-FC03'], 				# function code 03: Read Holding Registers
 		'04': ['4','04','FC04','input register','input registers','Input Register',
 				'Input Registers','IR','RIR','IR-FC04']									# function code 04: Read Input Registers
@@ -25,8 +26,8 @@ class ModbusHelper(object):
 		'uint16': 1,
 		'sint16': 1,
 		'float32': 2,
-		#'float64': 4, # unsupported at the moment
-		#'packedbool': 1, # unsupported at the moment
+		#'float64': 4, # unsupported at the moment, to be added
+		#'packedbool': 1, # unsupported at the moment, to be added
 		'di': 1,
 		'coil': 1
 	}
@@ -142,7 +143,7 @@ class ModbusHelper(object):
 			key_value = config[key]
 
 			# for keys/values that should be entered as string
-			if key in ['server_ip']:
+			if key in ['server_ip','log_file_type','log_file_name']:
 				if not isinstance(key_value,str):
 					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
 					print('\t[ERROR] value of key "'+str(key)+'" should be of type "string" (str)')
@@ -175,6 +176,21 @@ class ModbusHelper(object):
 									print('\t[ERROR] octet "'+str(octet)+'" shall be in range [0,255]')
 									print('\t[ERROR] please provide a valid IPv4 address format A.B.C.D with A, B, C, and D in range [0,255]')
 									return
+				# check for valid/supported log_file_type
+				elif key == 'log_file_type':
+					if key_value not in ['csv','json']:
+						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+						print('\t[ERROR] invalid/not supported "log_file_type" provided:',str(key_value))
+						print('\t[ERROR] please provide a valid/supported log_file_type, either "csv" or "json"')
+						return
+				# remove ambiguous characters for log_file_name, replace them with "_"
+				elif key == 'log_file_name':
+					for ambiguous_char in ['`','~','!','@','#','$','%','^','&','*','(',')','+','=',',','.','?','/','<','>','{','}','[',']','|']:
+						if ambiguous_char in key_value:
+							print('\t[WARNING] Ambiguous character(s) "'+str(ambiguous_char)+'" found in "log_file_name":',str(key_value))
+							print('\t[WARNING] will be replace by "_":',str(key_value.replace(ambiguous_char,'_')))
+							config[key] = key_value.replace(ambiguous_char,'_')
+							key_value = config[key]
 
 			# for keys/values that should be entered as integer
 			elif key in ['server_port','server_id','in_memory_records']:
@@ -403,7 +419,21 @@ class ModbusTCPDataLogger:
 		time.sleep(2)
 		sys.exit(0)
 
-	def __init__(self, full_path_to_modbus_config_json=None, full_path_to_modbus_template_csv=None,quiet=False,log_file_type='csv'):
+	def write_data_to_disk(self, data, log_file_type, log_file_name):
+		full_path_to_log_file = os.path.join(self.log_file_location,log_file_name+'.'+log_file_type)
+		if not os.path.exists(full_path_to_log_file):
+			if log_file_type == 'csv':
+				DataHelper.lod_to_csv(
+						lod = data, 
+						full_path_to_csv_file = full_path_to_log_file
+					)
+			elif log_file_type == 'json':
+				with open(full_path_to_log_file, 'w') as fp:
+					json.dump(data, fp)
+				fp.close()
+		return
+
+	def __init__(self, full_path_to_modbus_config_json=None, full_path_to_modbus_template_csv=None, full_path_to_logged_data=None, quiet=False):
 		if full_path_to_modbus_config_json is None:
 			print('\t[ERROR] a Modbus config.json file is required for a ModbusTCPDataLogger instance')
 			print('\t[ERROR] please provide the full path to the Modbus config.json file')
@@ -412,7 +442,25 @@ class ModbusTCPDataLogger:
 			print('\t[ERROR] a Modbus template.csv file is required for a ModbusTCPDataLogger instance')
 			print('\t[ERROR] please provide the full path to the Modbus template.csv file')
 			return
+		if full_path_to_logged_data is None:
+			print('\t[WARNING] no explicit path location provided on where to store data log files on the local system')
+			default_path_to_data_files = os.path.dirname(os.path.realpath(__file__)).replace('modbus-dl/scripts','modbus-dl/data')
+			print('\t[WARNING] will default to using:', str(default_path_to_data_files))
+			full_path_to_logged_data = default_path_to_data_files
+			self.log_file_location = full_path_to_logged_data
+				
+		self.data_log = {
+			'in_memory_records': 0
+		}
 		self.modbus_config = ModbusHelper.parse_json_config(full_path_to_modbus_config_json)
+		if self.modbus_config['log_file_type'] == 'csv':
+			self.data_log['data'] = []
+		elif self.modbus_config['log_file_type'] == 'json':
+			self.data_log['data'] = {}
+		else:
+			print('\t[ERROR] on "log_file_type": '+str(self.modbus_config['log_file_type']))
+			print('\t[ERROR] currently supported log_file_type are either "csv" or "json"')
+
 		self.modbus_tcp_client = ModbusTCPClient(
 				server_ip=self.modbus_config['server_ip'],
 				server_port=self.modbus_config['server_port'],
@@ -426,7 +474,25 @@ class ModbusTCPDataLogger:
 
 		print('Press Ctrl+C to stop and exit...')
 		while True:
-			modbus_poll_response = self.modbus_tcp_client.cycle_poll()
+			modbus_poll_response = self.modbus_tcp_client.cycle_poll()			
+			
+			if self.data_log['in_memory_records'] < self.modbus_config['in_memory_records']:
+				if self.modbus_config['log_file_type'] == 'csv':
+					self.data_log['data'].append(modbus_poll_response)
+				elif self.modbus_config['log_file_type'] == 'json':
+					self.data_log['data'][modbus_poll_response['timestamp_utc']] = modbus_poll_response
+				self.data_log['in_memory_records'] += 1
+			elif self.data_log['in_memory_records'] == self.modbus_config['in_memory_records']:
+				self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+				if self.modbus_config['log_file_type'] == 'csv':
+					self.data_log['data'] = [modbus_poll_response]
+				elif self.modbus_config['log_file_type'] == 'json':
+					self.data_log['data'] = {modbus_poll_response['timestamp_utc']: modbus_poll_response}
+				self.data_log['in_memory_records'] = 1
+
+			#print(json.dumps(self.data_log, indent=4))
+			#print(str(self.data_log['in_memory_records']))
+
 			if not quiet:
 				self.modbus_tcp_client.pretty_print_interpreted_response(modbus_poll_response)
 				print('Press Ctrl+C to stop and exit...')

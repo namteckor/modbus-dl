@@ -7,5 +7,7 @@
     "file_rotation":
         {
             "max_file_records": 3600
-        }
+        },
+    "log_file_type": "csv",
+    "log_file_name": "my_logged_data"
 }
