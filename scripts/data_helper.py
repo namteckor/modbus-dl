@@ -1,7 +1,5 @@
 import struct, os, csv
 
-import pdb
-
 class DataHelper(object):
 
 	# Method to convert an IEEE 754 single precision (32-bit) floating-point to its binary string representation

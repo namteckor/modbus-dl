@@ -9,7 +9,7 @@
         {
             "max_file_records": 30
         },
-    "log_file_type": "csv",
+    "log_file_type": "json",
     "log_file_name": "my_logged_data",
     "json_indent": null
 }

@@ -1,9 +1,7 @@
-import os, sys, socket, datetime, time, math, json, signal
+import os, sys, socket, datetime, time, math, csv, json, signal
 from umodbus.client import tcp
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from data_helper import DataHelper
-
-import pdb
 
 class ModbusHelper(object):
 
@@ -208,20 +206,39 @@ class ModbusHelper(object):
 					elif key_value not in [502,503]:
 						print('\t[WARNING] "server_port" from config file not in common Modbus TCP port list [502,503]:',str(key_value),'\n')
 						continue
+				# check for valid Modbus Server ID
 				elif key == 'server_id':
 					if not (key_value in range(0,256)):
 						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
 						print('\t[ERROR] invalid server ID "'+str(key_value)+'" out of valid range [0,255]')
 						return
+				# ensure only strictly positive values configured
 				elif key == 'in_memory_records':
 					if not key_value > 0:
 						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
-						print('\t[ERROR] for key "'+str(key)+'", please provide a strictly positive value > 0 (0 not allowed!)')
+						print('\t[ERROR] for key "'+str(key)+'", please provide a strictly positive value > 0 (0 NOT allowed!)')
+						print('\t[ERROR] current value provided is',str(key_value))
+						return				
+
+			# for keys/values that should be entered as either integer or null
+			elif key in ['json_indent']:
+				if (not isinstance(key_value,int)) and (not key_value is None):
+					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+					print('\t[ERROR] value of key "'+str(key)+'" should be of type "integer" (int) or "NoneType" (null)')
+					print('\t[ERROR] current type of value for key "'+str(key)+'" is',type(key_value),'and current value is config["'+str(key)+'"] =',str(key_value))
+					return				
+				if key == 'json_indent':
+					if key_value is None:
+						continue
+					# if not None, ensure only positive or zero integer values configured
+					elif not key_value >= 0:
+						print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
+						print('\t[ERROR] for key "'+str(key)+'", please provide a positive value >= 0 (0 allowed)')
 						print('\t[ERROR] current value provided is',str(key_value))
 						return
 
 			# for keys/values that should be entered as either integer or float
-			elif key in ['poll_interval_seconds']:
+			elif key in ['poll_interval_seconds','server_timeout_seconds']:
 				if not (isinstance(key_value,int) or isinstance(config[key],float)):
 					print('\t[ERROR] Error parsing config file:',str(full_path_to_modbus_config_json))
 					print('\t[ERROR] value of key "'+str(key)+'" should be of type "integer" (int) or "float" (float)')
@@ -297,7 +314,7 @@ class ModbusTCPClient:
 		else:
 			self.call_groups, self.interpreter_helper = ModbusHelper.parse_template_build_calls(full_path_to_modbus_template_csv)
 
-	def connect(self, timeout=10):
+	def connect(self, timeout=5):
 		socket.setdefaulttimeout(timeout)
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)		
 		self.sock.connect((self.modbus_tcp_server_ip_address, self.modbus_tcp_server_port))
@@ -376,23 +393,17 @@ class ModbusTCPClient:
 			modbus_request = ModbusHelper.UMODBUS_TCP_CALL[modbus_call]
 			for query in self.call_groups[modbus_call]:
 				message = modbus_request(slave_id=self.modbus_tcp_server_id, starting_address=query['start_address'], quantity=query['register_count'])
-				#print('\t[INFO] message =',str(message))
 
 				# Response depends on Modbus function code.
 				response = tcp.send_message(message, self.sock)
-				#print('\t[INFO] response =', str(response))
-
 				interpreted_response = self.interpret_response(response, modbus_call, query['start_address'])
-				#print('\t[INFO] interpreted_response =', str(interpreted_response))
 				all_interpreted_responses.append(interpreted_response)
 		combined_responses = self.combine_tag_responses(all_interpreted_responses)
-		#print('\t[INFO] combined_responses =', str(combined_responses))
 		return combined_responses
 
 	def pretty_print_interpreted_response(self, to_print, max_items_per_line=5):
 		headers = list(to_print.keys())		
-		header_max_length = max([len(str(h)) for h in headers])		
-		#print(' | '.join(str(x) for x in [h.ljust(header_max_length) for h in headers]))
+		header_max_length = max([len(str(h)) for h in headers])
 		values = list(to_print.values())
 		value_max_length = max([len(str(v)) for v in values])
 		max_length = max(header_max_length,value_max_length)
@@ -414,6 +425,8 @@ class ModbusTCPClient:
 class ModbusTCPDataLogger:
 	def termination_signal_handler(self, signal, frame):
 		print('\nYou pressed Ctrl+C!')
+		self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+		self.rotate_file(self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
 		self.modbus_tcp_client.disconnect()
 		print('Bye!')
 		time.sleep(2)
@@ -429,9 +442,27 @@ class ModbusTCPDataLogger:
 					)
 			elif log_file_type == 'json':
 				with open(full_path_to_log_file, 'w') as fp:
-					json.dump(data, fp)
+					json.dump(data, fp, indent=self.modbus_config['json_indent'])
 				fp.close()
+		else:
+			if log_file_type == 'csv':
+				with open(full_path_to_log_file, 'a', newline='') as csv_log:
+					for record in data:
+						csv_log_append = csv.writer(csv_log)
+						csv_log_append.writerow(list(record.values()))
+			elif log_file_type == 'json':
+				with open(full_path_to_log_file,'r+') as json_log:
+					json_data = json.load(json_log)
+					json_data.update(data)
+					json_log.seek(0)
+					json.dump(json_data, json_log, indent=self.modbus_config['json_indent'])
 		return
+
+	def rotate_file(self, log_file_type, log_file_name):
+		full_path_to_log_file = os.path.join(self.log_file_location,log_file_name+'.'+log_file_type)
+		ts_str = str(int(time.time())) #str(time.time_ns())
+		full_path_to_log_file_rotated = os.path.join(self.log_file_location,log_file_name+'_'+ts_str+'.'+log_file_type)
+		os.rename(full_path_to_log_file, full_path_to_log_file_rotated)
 
 	def __init__(self, full_path_to_modbus_config_json=None, full_path_to_modbus_template_csv=None, full_path_to_logged_data=None, quiet=False):
 		if full_path_to_modbus_config_json is None:
@@ -450,9 +481,15 @@ class ModbusTCPDataLogger:
 			self.log_file_location = full_path_to_logged_data
 				
 		self.data_log = {
-			'in_memory_records': 0
+			'in_memory_records': 0,
+			'written_to_live_file_records': 0
 		}
 		self.modbus_config = ModbusHelper.parse_json_config(full_path_to_modbus_config_json)
+		if self.modbus_config is None:
+			print('\t[ERROR] An error occured while parsing the Modbus json configuration file!')
+			print('\t[ERROR] Please review the error messages, correct the Modbus json configuration file and try again.')
+			print('\t[ERROR] Now exiting Python with sys.exit()')
+			sys.exit()
 		if self.modbus_config['log_file_type'] == 'csv':
 			self.data_log['data'] = []
 		elif self.modbus_config['log_file_type'] == 'json':
@@ -460,6 +497,8 @@ class ModbusTCPDataLogger:
 		else:
 			print('\t[ERROR] on "log_file_type": '+str(self.modbus_config['log_file_type']))
 			print('\t[ERROR] currently supported log_file_type are either "csv" or "json"')
+			print('\t[ERROR] Now exiting Python with sys.exit()')
+			sys.exit()
 
 		self.modbus_tcp_client = ModbusTCPClient(
 				server_ip=self.modbus_config['server_ip'],
@@ -468,7 +507,7 @@ class ModbusTCPDataLogger:
 				poll_interval_seconds=self.modbus_config['poll_interval_seconds']
 			)
 		self.modbus_tcp_client.load_template(full_path_to_modbus_template_csv)
-		self.modbus_tcp_client.connect()				
+		self.modbus_tcp_client.connect(self.modbus_config['server_timeout_seconds'])				
 
 		signal.signal(signal.SIGINT, self.termination_signal_handler)
 
@@ -476,24 +515,32 @@ class ModbusTCPDataLogger:
 		while True:
 			modbus_poll_response = self.modbus_tcp_client.cycle_poll()			
 			
+			# continue to load records in memory as long as in_memory_records threshold is not met
 			if self.data_log['in_memory_records'] < self.modbus_config['in_memory_records']:
 				if self.modbus_config['log_file_type'] == 'csv':
 					self.data_log['data'].append(modbus_poll_response)
 				elif self.modbus_config['log_file_type'] == 'json':
 					self.data_log['data'][modbus_poll_response['timestamp_utc']] = modbus_poll_response
 				self.data_log['in_memory_records'] += 1
+			
+			# if in_memory_recods threshold is met, time to write data to disk
 			elif self.data_log['in_memory_records'] == self.modbus_config['in_memory_records']:
 				self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+				
+				# keep track of and update the amount of records written to disk
+				self.data_log['written_to_live_file_records'] += self.data_log['in_memory_records']				
+				# check if the file should be rotated, i.e. if the max_file_records_threshold is met
+				if self.data_log['written_to_live_file_records'] >= self.modbus_config['file_rotation']['max_file_records']:
+					self.rotate_file(self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+					self.data_log['written_to_live_file_records'] = 0
+
 				if self.modbus_config['log_file_type'] == 'csv':
 					self.data_log['data'] = [modbus_poll_response]
 				elif self.modbus_config['log_file_type'] == 'json':
 					self.data_log['data'] = {modbus_poll_response['timestamp_utc']: modbus_poll_response}
 				self.data_log['in_memory_records'] = 1
 
-			#print(json.dumps(self.data_log, indent=4))
-			#print(str(self.data_log['in_memory_records']))
-
 			if not quiet:
 				self.modbus_tcp_client.pretty_print_interpreted_response(modbus_poll_response)
-				print('Press Ctrl+C to stop and exit...')
+			print('Press Ctrl+C to stop and exit gracefully...')
 			time.sleep(self.modbus_config['poll_interval_seconds'])
