@@ -478,7 +478,7 @@ class ModbusTCPDataLogger:
 			default_path_to_data_files = os.path.dirname(os.path.realpath(__file__)).replace('modbus-dl/scripts','modbus-dl/data')
 			print('\t[WARNING] will default to using:', str(default_path_to_data_files))
 			full_path_to_logged_data = default_path_to_data_files
-			self.log_file_location = full_path_to_logged_data
+		self.log_file_location = full_path_to_logged_data
 				
 		self.data_log = {
 			'in_memory_records': 0,
@@ -511,7 +511,7 @@ class ModbusTCPDataLogger:
 
 		signal.signal(signal.SIGINT, self.termination_signal_handler)
 
-		print('Press Ctrl+C to stop and exit...')
+		print('Press Ctrl+C to stop and exit gracefully...')
 		while True:
 			modbus_poll_response = self.modbus_tcp_client.cycle_poll()			
 			
@@ -542,5 +542,5 @@ class ModbusTCPDataLogger:
 
 			if not quiet:
 				self.modbus_tcp_client.pretty_print_interpreted_response(modbus_poll_response)
-			print('Press Ctrl+C to stop and exit gracefully...')
+				print('Press Ctrl+C to stop and exit gracefully...')
 			time.sleep(self.modbus_config['poll_interval_seconds'])
