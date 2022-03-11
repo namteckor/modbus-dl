@@ -22,16 +22,16 @@ Ex: ./modbus-dl.py -c config/modbus_config_10.json -t config/modbus_template_10.
 In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file also located in the 'config/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and instead will be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
 
 (1) Modbus configuration file in .json format   
-&ensp;'server_ip': a correctly formatted string representing the IP address or hostname of the Modbus TCP Server to connect to; ex: "10.0.1.10" or "localhost"
-&ensp;'server_port': a strictly positive integer [1;65535] representing the TCP port where the Modbus TCP Server process is running; ex: 502 
-&ensp;'server_id': a positive integer [0;255] representing the Modbus Server ID in use by the Modbus TCP Server; ex: 10 
+&ensp;'server_ip': a correctly formatted string representing the IP address or hostname of the Modbus TCP Server to connect to; ex: "10.0.1.10" or "localhost"  
+&ensp;'server_port': a strictly positive integer [1;65535] representing the TCP port where the Modbus TCP Server process is running; ex: 502  
+&ensp;'server_id': a positive integer [0;255] representing the Modbus Server ID in use by the Modbus TCP Server; ex: 10  
 &ensp;'server_timeout_seconds': a positive floating point representing the number of seconds to use as timeout when connecting to the Modbus TCP Server; ex: 3.0  
 &ensp;'poll_interval_seconds': a positive floating point representing the time interval in seconds between two (2) consecutive Modbus polls (i.e. scan rate); ex: 1.0  
-&ensp;'in_memory_records': a strictly positive integer (>0) representing the number of data records (timestamp) that modbus-dl will hold in memory before writing to disk in the log file; ex: 10    
+&ensp;'in_memory_records': a strictly positive integer (>0) representing the number of data records (timestamp) that modbus-dl will hold in memory before writing to disk in the log file; ex: 10  
 &ensp;'file_rotation['max_file_records']': a strictly positive integer (>0) representing the maximum number of data records (timestamp) that a single log file will have before being rotated to a new file; ex: 30  
 &ensp;'log_file_type': a string of either "csv" or "json" to tell modbus-dl which log file type to use  
 &ensp;'log_file_name': a string with the desired prefix log file name; ex: "my_logged_data"  
-&ensp;'json_indent': either null or a positive integer (>0) representing the desired indentation level to use with a "json" 'log_file_type'; ex: null or 4 
+&ensp;'json_indent': either null or a positive integer (>0) representing the desired indentation level to use with a "json" 'log_file_type'; ex: null or 4  
 
 (2) Modbus template file in .csv format  
 &ensp; 'address': the Modbus register address (zero-based) to poll/query for a desired parameter    
