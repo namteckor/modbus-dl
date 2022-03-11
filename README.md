@@ -21,6 +21,9 @@ Ex: ./modbus-dl.py -c config/modbus_config_10.json -t config/modbus_template_10.
 
 In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file also located in the 'config/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and instead will be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
 
+You can view the content and format examples of the config and template files in the config/ folder.
+You can also see samples of created log files in the data/ folder, this was run against a Modbus TCP Server simulator using randomly generated data.
+
 (1) Modbus configuration file in .json format   
 &ensp;'server_ip': a correctly formatted string representing the IP address or hostname of the Modbus TCP Server to connect to; ex: "10.0.1.10" or "localhost"  
 &ensp;'server_port': a strictly positive integer [1;65535] representing the TCP port where the Modbus TCP Server process is running; ex: 502  
