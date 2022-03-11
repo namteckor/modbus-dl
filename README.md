@@ -31,7 +31,7 @@ In the example above, we are telling modbus-dl to use the 'modbus_config_10.json
 &ensp;'file_rotation['max_file_records']': a strictly positive integer (>0) representing the maximum number of data records (timestamp) that a single log file will have before being rotated to a new file; ex: 30  
 &ensp;'log_file_type': a string of either "csv" or "json" to tell modbus-dl which log file type to use  
 &ensp;'log_file_name': a string with the desired prefix log file name; ex: "my_logged_data"  
-&ensp;'json_indent': either null or a positive integer (>0) representing the desired indentation level to use with a "json" 'log_file_type'; ex: null or 4  
+&ensp;'json_indent': either null or a positive integer (>0) representing the desired indentation level to use with a "json" log_file_type; ex: null or 4  
 
 (2) Modbus template file in .csv format  
 &ensp; 'address': the Modbus register address (zero-based) to poll/query for a desired parameter    
