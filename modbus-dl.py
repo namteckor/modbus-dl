@@ -14,17 +14,18 @@ print('')
 
 argv = sys.argv[1:]
 
-short_options = 'c:t:o:q' 
-long_options =  ['config=','template=','output=','quiet']
+short_options = 'c:t:o:qn' 
+long_options =  ['config=','template=','output=','quiet','no-data-logging']
 
 try:
 	opts, args = getopt.getopt(argv,short_options,long_options)
 except getopt.error as err:
 	print('\tERROR!')
-	print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)>')
-	print('\t\t'+'-t <path to Modbus template file (.csv format)>')
-	print('\t\t'+'-o <path to output log files>')
-	print('\t\t'+'-q <to be quiet and to not display the interval Modbus reads, default False>')
+	print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)> [REQUIRED]')
+	print('\t\t'+'-t <path to Modbus template file (.csv format)> [REQUIRED]')
+	print('\t\t'+'-o <path to output log files> [optional]')
+	print('\t\t'+'-q <to be quiet and to not display the interval Modbus reads, default False> [optional]')
+	print('\t\t'+'-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging [optional]')
 	print(str(err))
 	sys.exit()
 
@@ -34,26 +35,29 @@ for item in opts:
 
 if ('-c' not in list_of_options_passed) and ('--config' not in list_of_options_passed):
 	print('\tERROR!')
-	print('\tMissing required argument -c or --config <path to Modbus configuration file (.json format)>')
+	print('\tMissing required argument -c or --config <path to Modbus configuration file (.json format)> [REQUIRED]')
 	print('')
-	print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)>')
-	print('\t\t'+'-t <path to Modbus template file (.csv format)>')
-	print('\t\t'+'-o <path to output log files>')
-	print('\t\t'+'-q <to be quiet and to not display the interval Modbus reads, default False>')
+	print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)> [REQUIRED]')
+	print('\t\t'+'-t <path to Modbus template file (.csv format)> [REQUIRED]')
+	print('\t\t'+'-o <path to output log files> [optional]')
+	print('\t\t'+'-q <to be quiet and to not display the interval Modbus reads, default False> [optional]')
+	print('\t\t'+'-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging [optional]')
 	sys.exit()
 elif ('-t' not in list_of_options_passed) and ('--template' not in list_of_options_passed):
 	print('\tERROR!')
-	print('\tMissing required argument -t or --template <path to Modbus template file (.csv format)>')
+	print('\tMissing required argument -t or --template <path to Modbus template file (.csv format)> [REQUIRED]')
 	print('')
-	print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)>')
-	print('\t\t'+'-t <path to Modbus template file (.csv format)>')
-	print('\t\t'+'-o <path to output log files>')
-	print('\t\t'+'-q <to be quiet and to not display the interval Modbus reads, default False>')
+	print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)> [REQUIRED]')
+	print('\t\t'+'-t <path to Modbus template file (.csv format)> [REQUIRED]')
+	print('\t\t'+'-o <path to output log files> [optional]')
+	print('\t\t'+'-q <to be quiet and to not display the interval Modbus reads, default False> [optional]')
+	print('\t\t'+'-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging [optional]')
 	sys.exit()
 
 # Set some defaults
 be_quiet = False
 output_log_files_location = None
+data_logging = True
 
 for opt, arg in opts:
 	if opt in ('-c', '--config'):
@@ -64,12 +68,15 @@ for opt, arg in opts:
 		output_log_files_location = str(arg)
 	elif opt in ('-q','--quiet'):
 		be_quiet = True
+	elif opt in ('-n','--no-data-logging'):
+		data_logging = False
 	else:
 		print('\tERROR!')
-		print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)>')
-		print('\t\t'+'-t <path to Modbus template file (.csv format)>')
-		print('\t\t'+'-o <path to output log files>')
-		print('\t\t'+'-q <to be quiet and to not display the returned data at each interval read, default False>')
+		print('\tUsage: modbus-dl.py -c <path to Modbus configuration file (.json format)> [REQUIRED]')
+		print('\t\t'+'-t <path to Modbus template file (.csv format)> [REQUIRED]')
+		print('\t\t'+'-o <path to output log files> [optional]')
+		print('\t\t'+'-q <to be quiet and to not display the returned data at each interval read, default False> [optional]')
+		print('\t\t'+'-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging [optional]')
 		print(str(err))
 		sys.exit()
 
@@ -77,5 +84,6 @@ modbus_logger = modbus_helper.ModbusTCPDataLogger(
 		full_path_to_modbus_config_json=modbus_config_location, 
 		full_path_to_modbus_template_csv=modbus_template_location, 
 		full_path_to_logged_data=output_log_files_location, 
-		quiet=be_quiet
+		quiet=be_quiet,
+		data_logging=data_logging
 	)		

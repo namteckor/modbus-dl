@@ -425,8 +425,9 @@ class ModbusTCPClient:
 class ModbusTCPDataLogger:
 	def termination_signal_handler(self, signal, frame):
 		print('\nYou pressed Ctrl+C!')
-		self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
-		self.rotate_file(self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+		if self.data_logging:
+			self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+			self.rotate_file(self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
 		self.modbus_tcp_client.disconnect()
 		print('Bye!')
 		time.sleep(2)
@@ -464,7 +465,7 @@ class ModbusTCPDataLogger:
 		full_path_to_log_file_rotated = os.path.join(self.log_file_location,log_file_name+'_'+ts_str+'.'+log_file_type)
 		os.rename(full_path_to_log_file, full_path_to_log_file_rotated)
 
-	def __init__(self, full_path_to_modbus_config_json=None, full_path_to_modbus_template_csv=None, full_path_to_logged_data=None, quiet=False):
+	def __init__(self, full_path_to_modbus_config_json=None, full_path_to_modbus_template_csv=None, full_path_to_logged_data=None, quiet=False, data_logging=True):
 		if full_path_to_modbus_config_json is None:
 			print('\t[ERROR] a Modbus config.json file is required for a ModbusTCPDataLogger instance')
 			print('\t[ERROR] please provide the full path to the Modbus config.json file')
@@ -478,6 +479,11 @@ class ModbusTCPDataLogger:
 			default_path_to_data_files = os.path.dirname(os.path.realpath(__file__)).replace('modbus-dl/scripts','modbus-dl/data')
 			print('\t[WARNING] will default to using:', str(default_path_to_data_files))
 			full_path_to_logged_data = default_path_to_data_files
+		if not data_logging:
+			print('\t[WARNING] data logging functionality has been explicitely disbaled by setting data_logging=False')
+			print('\t[WARNING] this overwrites the "quiet" argument and means that quiet=False')
+			quiet = False
+		self.data_logging = data_logging
 		self.log_file_location = full_path_to_logged_data
 				
 		self.data_log = {
@@ -515,30 +521,31 @@ class ModbusTCPDataLogger:
 		while True:
 			modbus_poll_response = self.modbus_tcp_client.cycle_poll()			
 			
-			# continue to load records in memory as long as in_memory_records threshold is not met
-			if self.data_log['in_memory_records'] < self.modbus_config['in_memory_records']:
-				if self.modbus_config['log_file_type'] == 'csv':
-					self.data_log['data'].append(modbus_poll_response)
-				elif self.modbus_config['log_file_type'] == 'json':
-					self.data_log['data'][modbus_poll_response['timestamp_utc']] = modbus_poll_response
-				self.data_log['in_memory_records'] += 1
-			
-			# if in_memory_recods threshold is met, time to write data to disk
-			elif self.data_log['in_memory_records'] == self.modbus_config['in_memory_records']:
-				self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+			if self.data_logging:
+				# continue to load records in memory as long as in_memory_records threshold is not met
+				if self.data_log['in_memory_records'] < self.modbus_config['in_memory_records']:
+					if self.modbus_config['log_file_type'] == 'csv':
+						self.data_log['data'].append(modbus_poll_response)
+					elif self.modbus_config['log_file_type'] == 'json':
+						self.data_log['data'][modbus_poll_response['timestamp_utc']] = modbus_poll_response
+					self.data_log['in_memory_records'] += 1
 				
-				# keep track of and update the amount of records written to disk
-				self.data_log['written_to_live_file_records'] += self.data_log['in_memory_records']				
-				# check if the file should be rotated, i.e. if the max_file_records_threshold is met
-				if self.data_log['written_to_live_file_records'] >= self.modbus_config['file_rotation']['max_file_records']:
-					self.rotate_file(self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
-					self.data_log['written_to_live_file_records'] = 0
+				# if in_memory_recods threshold is met, time to write data to disk
+				elif self.data_log['in_memory_records'] == self.modbus_config['in_memory_records']:
+					self.write_data_to_disk(self.data_log['data'], self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+					
+					# keep track of and update the amount of records written to disk
+					self.data_log['written_to_live_file_records'] += self.data_log['in_memory_records']				
+					# check if the file should be rotated, i.e. if the max_file_records_threshold is met
+					if self.data_log['written_to_live_file_records'] >= self.modbus_config['file_rotation']['max_file_records']:
+						self.rotate_file(self.modbus_config['log_file_type'], self.modbus_config['log_file_name'])
+						self.data_log['written_to_live_file_records'] = 0
 
-				if self.modbus_config['log_file_type'] == 'csv':
-					self.data_log['data'] = [modbus_poll_response]
-				elif self.modbus_config['log_file_type'] == 'json':
-					self.data_log['data'] = {modbus_poll_response['timestamp_utc']: modbus_poll_response}
-				self.data_log['in_memory_records'] = 1
+					if self.modbus_config['log_file_type'] == 'csv':
+						self.data_log['data'] = [modbus_poll_response]
+					elif self.modbus_config['log_file_type'] == 'json':
+						self.data_log['data'] = {modbus_poll_response['timestamp_utc']: modbus_poll_response}
+					self.data_log['in_memory_records'] = 1
 
 			if not quiet:
 				self.modbus_tcp_client.pretty_print_interpreted_response(modbus_poll_response)
