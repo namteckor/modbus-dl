@@ -25,6 +25,7 @@ In the example above, we are telling modbus-dl to use the 'modbus_config_10.json
 You can view the content and format examples of the config and template files in the config/ folder.
 You can also see samples of created log files in the data/ folder, this was run against a local Modbus TCP Server simulator using randomly generated data.
 
+## Configuration files  
 ### (1) Modbus configuration file in .json format   
 &ensp;'server_ip': a correctly formatted string representing the IP address or hostname of the Modbus TCP Server to connect to; ex: "10.0.1.10" or "localhost"  
 &ensp;'server_port': a strictly positive integer [1;65535] representing the TCP port where the Modbus TCP Server process is running; ex: 502  
