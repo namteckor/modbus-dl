@@ -32,3 +32,5 @@ address,read_type,data_type,tag_name,scaling_coeff,scaling_offset
 24,FC01,coil,coil_tag_24,,
 25,coil,coil,coil_tag_25,,
 26,coil,coil,coil_tag_26,,
+100,IR,float64,ir_tag_100_f64,,
+104,IR,uint16,ir_tag_104_11111,,

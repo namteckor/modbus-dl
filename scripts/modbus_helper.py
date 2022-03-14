@@ -24,7 +24,7 @@ class ModbusHelper(object):
 		'uint16': 1,
 		'sint16': 1,
 		'float32': 2,
-		#'float64': 4, # unsupported at the moment, to be added
+		'float64': 4, # unsupported at the moment, to be added
 		#'packedbool': 1, # unsupported at the moment, to be added
 		'di': 1,
 		'coil': 1
@@ -325,6 +325,7 @@ class ModbusTCPClient:
 	def interpret_response(self, response, fc, start_address):
 		interpreted_response = {}
 		skip_next = False
+		skip_count = 0
 		for i in range(len(response)):
 			address_index = i + start_address
 			if fc in ['01', '02']:
@@ -332,7 +333,13 @@ class ModbusTCPClient:
 				interpreted_response[self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']] = response[i]
 			else:
 				if skip_next:
-					skip_next = False
+					if skip_count == 0:
+						skip_next = False
+					elif skip_count == 1:
+						skip_count -= 1
+						skip_next = False
+					else:
+						skip_count -= 1
 					continue								
 
 				#given_data_type = self.interpreter_helper[fc]['address_data_type_map'][address_index]
@@ -348,6 +355,12 @@ class ModbusTCPClient:
 				elif given_data_type == 'uint16':
 					rv = response[i]
 					skip_next = False
+				elif given_data_type == 'float64':
+					float_64_items = response[i:i+4]
+					float_64_binaries = [DataHelper.int_16_unsigned_to_binary(reg) for reg in float_64_items]
+					rv = DataHelper.binary_64_to_ieee_754_single_precision_float(''.join(float_64_binaries))
+					skip_next = True
+					skip_count = 3
 				else:
 					print('\t[ERROR] unsupported data_type of "'+str(given_data_type)+'"')
 					skip_next = False
