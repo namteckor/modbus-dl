@@ -24,8 +24,12 @@ class ModbusHelper(object):
 		'uint16': 1,
 		'sint16': 1,
 		'float32': 2,
-		'float64': 4, # unsupported at the moment, to be added
+		'float64': 4,
 		#'packedbool': 1, # unsupported at the moment, to be added
+		#'ruint16': 1, # unsupported at the moment, to be added; "reverse" uint16 for Little-Endian interpretation
+		#'rsint16': 1, # unsupported at the moment, to be added; "reverse" sint16 for Little-Endian interpretation
+		#'rfloat32': 2, # unsupported at the moment, to be added; "reverse" float32 for Little-Endian interpretation
+		#'rfloat64': 4, # unsupported at the moment, to be added; "reverse" float64 for Little-Endian interpretation
 		'di': 1,
 		'coil': 1
 	}
