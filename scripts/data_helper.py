@@ -50,6 +50,11 @@ class DataHelper(object):
     	else:
     		return int_number
     
+    # Method to convert a 16-bit binary string into its 16-bit unsigned integer representation
+    @classmethod
+    def binary_string_16_bits_to_int_16_unsigned(cls, binary_string_16_bits):
+        return struct.unpack('!H',struct.pack('!H', int(binary_string_16_bits, 2)))[0]
+    
     # Method to convert a 16-bit unsigned integer data type into its binary string representation on 16 bits
     @classmethod
     def int_16_unsigned_to_binary(cls, uint_number):
@@ -103,6 +108,12 @@ class DataHelper(object):
             print('\t',type(sint_number))
             print('...')
             print('Please provide a signed (-32768 <= x <= 32767) integer-type number as argument')
+
+    # Method to swap bytes in a 16-bit register provided as binary string; use for Big-Endian/Little-Endian conversion on 16-bit registers
+    @classmethod
+    def int_16_swap_bytes(cls, binary_string_16_bits):
+        swapped = binary_string_16_bits[8:16] + binary_string_16_bits[0:8]
+        return swapped
 
     # Method to load a .csv file and convert its content into an in-memory Python list of dictionaries (lod)
     @classmethod

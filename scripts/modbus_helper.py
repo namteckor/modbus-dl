@@ -25,9 +25,9 @@ class ModbusHelper(object):
 		'sint16': 1,
 		'float32': 2,
 		'float64': 4,
-		#'packedbool': 1, # unsupported at the moment, to be added
-		#'ruint16': 1, # unsupported at the moment, to be added; "reverse" uint16 for Little-Endian interpretation
-		#'rsint16': 1, # unsupported at the moment, to be added; "reverse" sint16 for Little-Endian interpretation
+		'packedbool': 1,
+		'ruint16': 1,
+		'rsint16': 1,
 		#'rfloat32': 2, # unsupported at the moment, to be added; "reverse" float32 for Little-Endian interpretation
 		#'rfloat64': 4, # unsupported at the moment, to be added; "reverse" float64 for Little-Endian interpretation
 		'di': 1,
@@ -365,8 +365,20 @@ class ModbusTCPClient:
 					rv = DataHelper.binary_64_to_ieee_754_single_precision_float(''.join(float_64_binaries))
 					skip_next = True
 					skip_count = 3
+				elif given_data_type == 'rsint16':
+					swapped_rv = DataHelper.binary_string_16_bits_to_int_16_unsigned(DataHelper.int_16_swap_bytes(DataHelper.int_16_unsigned_to_binary(response[i])))
+					rv = DataHelper.int_16_unsigned_to_signed(swapped_rv)
+					skip_next = False
+				elif given_data_type == 'ruint16':
+					rv = DataHelper.binary_string_16_bits_to_int_16_unsigned(DataHelper.int_16_swap_bytes(DataHelper.int_16_unsigned_to_binary(response[i])))					
+					skip_next = False
+				elif given_data_type == 'packedbool':
+					binary_string_register = DataHelper.int_16_unsigned_to_binary(response[i])
+					binary_string_register_list = []
+					binary_string_register_list[:0]= binary_string_register 
+					skip_next = False
 				else:
-					print('\t[ERROR] unsupported data_type of "'+str(given_data_type)+'"')
+					print('\t[ERROR] unsupported data_type of "'+str(given_data_type)+'" on tag_name = "'+self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']+'"')
 					skip_next = False
 					continue
 
@@ -384,14 +396,20 @@ class ModbusTCPClient:
 					one_scaling_null =  applied_coeff_null ^ (math.isnan(float(applied_offset)) or (applied_offset is None))
 					both_null_case = (math.isnan(float(applied_coeff)) or (applied_coeff is None)) & (math.isnan(float(applied_offset)) or (applied_offset is None))
 				if not both_null_case:
-					if one_scaling_null:
-						if applied_coeff_null:
-							applied_coeff = 1
-						else:
-							applied_offset = 0
-					rv = rv*float(applied_coeff) + float(applied_offset)
+					if not (given_data_type == 'packedbool'):
+						if one_scaling_null:
+							if applied_coeff_null:
+								applied_coeff = 1
+							else:
+								applied_offset = 0
+						rv = rv*float(applied_coeff) + float(applied_offset)
 
-				interpreted_response[self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']] = rv
+				if given_data_type == 'packedbool':					
+					for string_char_pos, string_char in enumerate(binary_string_register_list):
+						suffix = str(15 - string_char_pos)
+						interpreted_response[self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']+'_bit'+suffix] = int(string_char)
+				else:
+					interpreted_response[self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']] = rv
 
 		return interpreted_response
 	
