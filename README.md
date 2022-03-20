@@ -48,16 +48,29 @@ You can view the content and format examples of the config and template files in
 You can also see samples of created log files in the data/ folder, this was run against a local Modbus TCP Server simulator using randomly generated data.  
 
 ## Supported data types
+### di
 &ensp;&ensp;di: 1-bit digital/discrete input status, one (1) single register/address, 1 or 0, True or False  
+### coil
 &ensp;&ensp;coil: 1-bit digital/discrete output coil status, one (1) single register/address, 1 or 0, True or False  
+### uint16
 &ensp;&ensp;uint16: 16-bit unsigned integer (unsigned short), one (1) single 16-bit register/address, values in range [0;65535], Big-Endian order [A B]  
+### sint16
 &ensp;&ensp;sint16: 16-bit signed integer (signed short), one (1) single 16-bit register/address, values in range [−32,767;+32,767], Big-Endian order [A B]  
+### float32
 &ensp;&ensp;float32: 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Big-Endian order [A B C D]  
+### float64
 &ensp;&ensp;float64: 64-bit IEEE 754 double precision (64-bit) floating-point (double), four (4) consecutive 16-bit registers/addresses, Big-Endian order [A B C D E F G H]  
+### packedbool
 &ensp;&ensp;packedbool: "packed boolean", one (1) single 16-bit register/address, unpacks each one of the 16 bits in the register in Big-Endian order  
+### ruint16
 &ensp;&ensp;ruint16': "reversed" byte-swapped 16-bit unsigned integer (unsigned short), one (1) single 16-bit register/address, values in range [0;65535], Little-Endian order [B A]
+### rsint16
 &ensp;&ensp;rsint16: "reversed" byte-swapped 16-bit signed integer (signed short), one (1) single 16-bit register/address, values in range [−32,767;+32,767], Little-Endian order [B A]
+### rfloat32_byte_swap
 &ensp;&ensp;rfloat32_byte_swap: "reversed" byte-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Mid-Big-Endian order [B A D C] # [A B C D] -> [B A] [D C]  
+### rfloat32_word_swap
 &ensp;&ensp;rfloat32_word_swap: "reversed" word-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Mid-Little-Endian order [C D A B] # [A B C D] -> [C D] [A B]  
+### rfloat32_byte_word_swap
 &ensp;&ensp;rfloat32_byte_word_swap: "reversed" word-swapped AND byte-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Little-Endian order [D C B A] # [A B C D] -> [D C] [B A]  
+### rfloat64 (not supported yet)
 &ensp;&ensp;#rfloat64: "reverse" float64, four (4) consecutive 16-bit registers/addresses # unsupported at the moment, to be added; "reverse" float64 for Little-Endian interpretation
