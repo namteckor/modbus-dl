@@ -18,7 +18,7 @@ When calling modbus-dl, pass the path to these two (2) configuration files as ar
 &ensp;&ensp;-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging, default False/data logging enabled (--no-data-logging) [optional]  
 &ensp;&ensp;-h to display the help message and exit (--help) [optional]  
 
-## Configuration files  
+## Configuration & Template files  
 ### (1) Modbus configuration file in .json format   
 &ensp;'server_ip': a correctly formatted string representing the IP address or hostname of the Modbus TCP Server to connect to; ex: "10.0.1.10" or "localhost"  
 &ensp;'server_port': a strictly positive integer [1;65535] representing the TCP port where the Modbus TCP Server process is running; ex: 502  
@@ -45,4 +45,19 @@ Ex: ./modbus-dl.py -c config/modbus_config_10.json -t config/modbus_template_10.
 In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file also located in the 'config/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and instead will be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
 
 You can view the content and format examples of the config and template files in the config/ folder.
-You can also see samples of created log files in the data/ folder, this was run against a local Modbus TCP Server simulator using randomly generated data.
+You can also see samples of created log files in the data/ folder, this was run against a local Modbus TCP Server simulator using randomly generated data.  
+
+## Supported data types
+&ensp;&ensp;di: 1-bit digital/discrete input status, one (1) single register/address, 1 or 0, True or False  
+&ensp;&ensp;coil: 1-bit digital/discrete output coil status, one (1) single register/address, 1 or 0, True or False  
+&ensp;&ensp;uint16: 16-bit unsigned integer (unsigned short), one (1) single 16-bit register/address, values in range [0;65535], Big-Endian order [A B]  
+&ensp;&ensp;sint16: 16-bit signed integer (signed short), one (1) single 16-bit register/address, values in range [−32,767;+32,767], Big-Endian order [A B]  
+&ensp;&ensp;float32: 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Big-Endian order [A B C D]  
+&ensp;&ensp;float64: 64-bit IEEE 754 double precision (64-bit) floating-point (double), four (4) consecutive 16-bit registers/addresses, Big-Endian order [A B C D E F G H]  
+&ensp;&ensp;packedbool: "packed boolean", one (1) single 16-bit register/address, unpacks each one of the 16 bits in the register in Big-Endian order  
+&ensp;&ensp;ruint16': "reversed" byte-swapped 16-bit unsigned integer (unsigned short), one (1) single 16-bit register/address, values in range [0;65535], Little-Endian order [B A]
+&ensp;&ensp;rsint16: "reversed" byte-swapped 16-bit signed integer (signed short), one (1) single 16-bit register/address, values in range [−32,767;+32,767], Little-Endian order [B A]
+&ensp;&ensp;rfloat32_byte_swap: "reversed" byte-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Mid-Big-Endian order [B A D C] # [A B C D] -> [B A] [D C]  
+&ensp;&ensp;rfloat32_word_swap: "reversed" word-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Mid-Little-Endian order [C D A B] # [A B C D] -> [C D] [A B]  
+&ensp;&ensp;rfloat32_byte_word_swap: "reversed" word-swapped AND byte-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Little-Endian order [D C B A] # [A B C D] -> [D C] [B A]  
+&ensp;&ensp;#rfloat64: "reverse" float64, four (4) consecutive 16-bit registers/addresses # unsupported at the moment, to be added; "reverse" float64 for Little-Endian interpretation
