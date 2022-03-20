@@ -35,3 +35,7 @@ address,read_type,data_type,tag_name,scaling_coeff,scaling_offset
 100,IR,float64,ir_tag_100_f64,,
 104,IR,uint16,ir_tag_104_11111,,
 105,IR,packedbool,packedbool_tag,,
+106,IR,float32,ir_tag_test_f32_swap_12345678,,
+108,IR,rfloat32_byte_swap,ir_tag_test_f32_swap_0.0124088237,,
+110,IR,rfloat32_word_swap,ir_tag_test_f32_swap_237840655000000000000,,
+112,IR,rfloat32_byte_word_swap,ir_tag_test_f32_swap_944706240,,

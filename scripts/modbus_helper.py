@@ -28,7 +28,9 @@ class ModbusHelper(object):
 		'packedbool': 1,
 		'ruint16': 1,
 		'rsint16': 1,
-		#'rfloat32': 2, # unsupported at the moment, to be added; "reverse" float32 for Little-Endian interpretation
+		'rfloat32_byte_swap': 2, # [A B C D] -> [B A] [D C]
+		'rfloat32_word_swap': 2, # [A B C D] -> [C D] [A B]
+		'rfloat32_byte_word_swap': 2, # [A B C D] -> [D C] [B A]
 		#'rfloat64': 4, # unsupported at the moment, to be added; "reverse" float64 for Little-Endian interpretation
 		'di': 1,
 		'coil': 1
@@ -377,6 +379,24 @@ class ModbusTCPClient:
 					binary_string_register_list = []
 					binary_string_register_list[:0]= binary_string_register 
 					skip_next = False
+				elif given_data_type == 'rfloat32_byte_swap':
+					float_32_items = response[i:i+2]
+					float_32_binary_string = ''.join([DataHelper.int_16_unsigned_to_binary(reg) for reg in float_32_items])
+					swapped_rv = DataHelper.float32_swap_bytes(float_32_binary_string)
+					rv = DataHelper.binary_32_to_ieee_754_single_precision_float(swapped_rv)
+					skip_next = True
+				elif given_data_type == 'rfloat32_word_swap':
+					float_32_items = response[i:i+2]
+					float_32_binary_string = ''.join([DataHelper.int_16_unsigned_to_binary(reg) for reg in float_32_items])
+					swapped_rv = DataHelper.float32_swap_words(float_32_binary_string)
+					rv = DataHelper.binary_32_to_ieee_754_single_precision_float(swapped_rv)
+					skip_next = True
+				elif given_data_type == 'rfloat32_byte_word_swap':
+					float_32_items = response[i:i+2]
+					float_32_binary_string = ''.join([DataHelper.int_16_unsigned_to_binary(reg) for reg in float_32_items])
+					swapped_rv = DataHelper.float32_swap_bytes_words(float_32_binary_string)
+					rv = DataHelper.binary_32_to_ieee_754_single_precision_float(swapped_rv)
+					skip_next = True
 				else:
 					print('\t[ERROR] unsupported data_type of "'+str(given_data_type)+'" on tag_name = "'+self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']+'"')
 					skip_next = False

@@ -109,10 +109,32 @@ class DataHelper(object):
             print('...')
             print('Please provide a signed (-32768 <= x <= 32767) integer-type number as argument')
 
-    # Method to swap bytes in a 16-bit register provided as binary string; use for Big-Endian/Little-Endian conversion on 16-bit registers
+    # Method to swap bytes in a 16-bit register provided and returned as binary string; use for Big-Endian/Little-Endian conversion on 16-bit registers
     @classmethod
     def int_16_swap_bytes(cls, binary_string_16_bits):
         swapped = binary_string_16_bits[8:16] + binary_string_16_bits[0:8]
+        return swapped
+
+    # Method to swap 8-bit bytes in a 32-bit binary strings, provided and returned as binary string; use for Big-Endian/Little-Endian conversion on 32-bit float "registers"
+    # [A B C D] -> [B A] [D C]
+    @classmethod
+    def float32_swap_bytes(cls, binary_string_32_bits):
+        swapped = binary_string_32_bits[8:16] + binary_string_32_bits[0:8] + binary_string_32_bits[24:32] + binary_string_32_bits[16:24]
+        return swapped
+
+    # Method to swap 16-bit words in a 32-bit binary strings, provided and returned as binary string; use for Big-Endian/Little-Endian conversion on 32-bit float "registers"
+    # [A B C D] -> [C D] [A B]
+    @classmethod
+    def float32_swap_words(cls, binary_string_32_bits):
+        swapped = binary_string_32_bits[16:32] + binary_string_32_bits[0:16]
+        return swapped
+
+    # Method to swap both 8-bit bytes and 16-bit words in a 32-bit binary strings, provided and returned as binary string; use for Big-Endian/Little-Endian conversion on 32-bit float "registers"
+    # [A B C D] -> [D C] [B A]
+    @classmethod
+    def float32_swap_bytes_words(cls, binary_string_32_bits):
+        swapped_words =  DataHelper.float32_swap_words(binary_string_32_bits)
+        swapped = DataHelper.float32_swap_bytes(swapped_words)
         return swapped
 
     # Method to load a .csv file and convert its content into an in-memory Python list of dictionaries (lod)
