@@ -40,11 +40,11 @@ When calling modbus-dl, pass the path to these two (2) configuration files as ar
 &ensp; 'scaling_offset': if needed, the scaling offset to apply on the raw data; scaled = scaling_coeff * raw + scaling_offset  
 
 ## Example  
-Ex: ./modbus-dl.py -c config/modbus_config_10.json -t config/modbus_template_10.csv  
+Ex: ./modbus-dl.py -c config/modbus_config_10.json -t template/modbus_template_10.csv  
 
-In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file also located in the 'config/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and will instead be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
+In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file located in the 'template/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and will instead be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
 
-You can view the content and format examples of the config and template files in the config/ folder.
+You can view the content and format examples of the config and template files in the config/ and template/ folders respectively.
 You can also see samples of created log files in the data/ folder, this was run against a local Modbus TCP Server simulator using randomly generated data.  
 
 ## Supported data types
