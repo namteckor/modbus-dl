@@ -531,7 +531,7 @@ class ModbusTCPDataLogger:
 			return
 		if full_path_to_logged_data is None:
 			print('\t[WARNING] no explicit path location provided on where to store data log files on the local system')
-			default_path_to_data_files = os.path.dirname(os.path.realpath(__file__)).replace('modbus-dl/scripts','modbus-dl/data')
+			default_path_to_data_files = os.path.dirname(os.path.realpath(__file__)).replace(os.path.join('modbus-dl','scripts'),os.path.join('modbus-dl','data'))
 			print('\t[WARNING] will default to using:', str(default_path_to_data_files))
 			full_path_to_logged_data = default_path_to_data_files
 		if not data_logging:
