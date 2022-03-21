@@ -60,14 +60,14 @@ Ex: ./modbus-dl.py -c config/modbus_config_10.json -t template/modbus_template_1
 
 In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file located in the 'template/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and will instead be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
 
-You can view the content and format examples of the config and template files in the config/ and template/ folders respectively.
+You can view the content and format examples of the config and template files in the config/ and template/ folders respectively.  
 You can also see samples of created log files in the data/ folder, this was run against a local Modbus TCP Server simulator using randomly generated data.  
 
 ## Supported data types
 ### di (use with read_type of FC02 or DI, Read Discrete Inputs)
-&ensp;&ensp;di: 1-bit digital/discrete input status, one (1) single register/address, 1 or 0, True or False  
+&ensp;&ensp;di: 1-bit digital/discrete input status, one (1) single register/address, 1 or 0, True or False, ON or OFF  
 ### coil (use with read_type of FC01 or Coil, Read Coils)
-&ensp;&ensp;coil: 1-bit digital/discrete output coil status, one (1) single register/address, 1 or 0, True or False  
+&ensp;&ensp;coil: 1-bit digital/discrete output coil status, one (1) single register/address, 1 or 0, True or False, ON or OFF  
 ### uint16 (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
 &ensp;&ensp;uint16: 16-bit unsigned integer (unsigned short), one (1) single 16-bit register/address, values in range [0;65535], Big-Endian order [A B]  
 ### sint16 (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
@@ -77,7 +77,7 @@ You can also see samples of created log files in the data/ folder, this was run 
 ### float64 (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
 &ensp;&ensp;float64: 64-bit IEEE 754 double precision (64-bit) floating-point (double), four (4) consecutive 16-bit registers/addresses, Big-Endian order [A B C D E F G H]  
 ### packedbool (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
-&ensp;&ensp;packedbool: "packed boolean", one (1) single 16-bit register/address, unpacks each one of the 16 bits in the register in Big-Endian order  
+&ensp;&ensp;packedbool: "packed boolean", one (1) single 16-bit register/address, unpacks each one of the 16 bits in the register in Big-Endian order to determine each bit's value/status, either 1 or 0, True or False, ON or OFF  
 ### ruint16 (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
 &ensp;&ensp;ruint16': "reversed" byte-swapped 16-bit unsigned integer (unsigned short), one (1) single 16-bit register/address, values in range [0;65535], Little-Endian order [B A]
 ### rsint16 (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
