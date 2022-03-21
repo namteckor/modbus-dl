@@ -425,6 +425,7 @@ class ModbusTCPClient:
 						rv = rv*float(applied_coeff) + float(applied_offset)
 
 				if given_data_type == 'packedbool':					
+					interpreted_response[self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']+'_uint16_value'] = response[i]
 					for string_char_pos, string_char in enumerate(binary_string_register_list):
 						suffix = str(15 - string_char_pos)
 						interpreted_response[self.interpreter_helper[fc]['address_maps'][address_index]['tag_name']+'_bit'+suffix] = int(string_char)
