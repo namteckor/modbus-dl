@@ -1,5 +1,5 @@
 # modbus-dl
-**modbus-dl** is a simple Modbus TCP data logger implementation in Python based on [umodbus](https://github.com/AdvancedClimateSystems/uModbus).  
+**modbus-dl** is a simple Modbus TCP client and data logger implementation in Python based on [umodbus](https://github.com/AdvancedClimateSystems/uModbus).  
 
 modbus-dl will connect to a live Modbus TCP Server accessible on the network, poll the required registers at a desired interval/scan rate and log the data to disk either in .csv or .json format.  
 
