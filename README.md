@@ -56,7 +56,10 @@ When calling modbus-dl, pass the path to these two (2) configuration files as ar
 &ensp; 'scaling_offset': if needed, the scaling offset to apply on the raw data; scaled = scaling_coeff * raw + scaling_offset  
 
 ## Example  
-Ex: ./modbus-dl.py -c config/modbus_config_10.json -t template/modbus_template_10.csv  
+Ex:  
+```bash
+./modbus-dl.py -c config/modbus_config_10.json -t template/modbus_template_10.csv  
+```
 
 In the example above, we are telling modbus-dl to use the 'modbus_config_10.json' file located in the 'config/' folder and to use the 'modbus_template_10.csv' file located in the 'template/' folder. The '-q' switch option was not provided so modbus-dl will NOT be quiet and will instead be verbose and display the queried data in the terminal prompt at each poll interval. The '-n' switch option was not provided so modbus-dl will perform its intended data logging function. Specifying the '-n' switch option will make modbus-dl be a simple "real-time" Modbus TCP Client; displaying the returned data at each poll interval but not performing any data logging (modbus-dl has the option to be used that way if data logging to the local file system is not required). The '-o' switch option was not specified so modbus-dl will default to storing the log files in the 'data/' folder. If specifying a different location, make sure the folder is created and does exist before using.    
 
