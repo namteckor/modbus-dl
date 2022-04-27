@@ -11,13 +11,13 @@ When calling modbus-dl, pass the path to these two (2) configuration files as ar
 
 ## Usage  
 ```text
-&ensp;path/to/modbus-dl.py  
-&ensp;&ensp;-c < path to Modbus configuration file (.json format) > (--config) [REQUIRED]  
-&ensp;&ensp;-t < path to Modbus template file (.csv format) > (--template) [REQUIRED]  
-&ensp;&ensp;-o < path to output log files, default uses 'data/' folder when not specified > (--output) [optional]  
-&ensp;&ensp;-q to be quiet and to not display the interval Modbus reads, default False/verbose (--quiet) [optional]  
-&ensp;&ensp;-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging, default False/data logging enabled (--no-data-logging) [optional]  
-&ensp;&ensp;-h to display the help message and exit (--help) [optional]  
+	path/to/modbus-dl.py  
+		-c < path to Modbus configuration file (.json format) > (--config) [REQUIRED]  
+		-t < path to Modbus template file (.csv format) > (--template) [REQUIRED]  
+		-o < path to output log files, default uses 'data/' folder when not specified > (--output) [optional]  
+		-q to be quiet and to not display the interval Modbus reads, default False/verbose (--quiet) [optional]  
+		-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging, default False/data logging enabled (--no-data-logging) [optional]  
+		-h to display the help message and exit (--help) [optional]  
 ```
 
 ## Configuration & Template files  
