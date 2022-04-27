@@ -10,6 +10,7 @@ There are two (2) important configuration files to setup for modbus-dl to work p
 When calling modbus-dl, pass the path to these two (2) configuration files as arguments.  
 
 ## Usage  
+```text
 &ensp;path/to/modbus-dl.py  
 &ensp;&ensp;-c < path to Modbus configuration file (.json format) > (--config) [REQUIRED]  
 &ensp;&ensp;-t < path to Modbus template file (.csv format) > (--template) [REQUIRED]  
@@ -17,6 +18,7 @@ When calling modbus-dl, pass the path to these two (2) configuration files as ar
 &ensp;&ensp;-q to be quiet and to not display the interval Modbus reads, default False/verbose (--quiet) [optional]  
 &ensp;&ensp;-n to make modbus-dl behave as a "real-time" Modbus TCP Client without data logging, default False/data logging enabled (--no-data-logging) [optional]  
 &ensp;&ensp;-h to display the help message and exit (--help) [optional]  
+```
 
 ## Configuration & Template files  
 ### (1) Modbus configuration file in .json format   
