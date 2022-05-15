@@ -1,5 +1,5 @@
 # modbus-dl
-**modbus-dl** is a simple Modbus TCP client and data logger implementation in Python based on [umodbus](https://github.com/AdvancedClimateSystems/uModbus).  
+**modbus-dl** is a simple Modbus TCP client and data logger implementation in Python based on [uModbus](https://github.com/AdvancedClimateSystems/uModbus).  
 
 modbus-dl will connect to a live Modbus TCP Server accessible on the network, poll the required registers at a desired interval/scan rate and log the data to disk either in .csv or .json format.  
 
@@ -94,7 +94,7 @@ You can also see samples of created log files in the data/ folder, this was run 
 ### rfloat32_byte_word_swap (use with read_type of FC03/FC04 or HR/IR, Read Holding Registers/Read Input Registers)
 &ensp;&ensp;rfloat32_byte_word_swap: "reversed" word-swapped AND byte-swapped 32-bit IEEE 754 single precision (32-bit) floating-point, two (2) consecutive 16-bit registers/addresses, Little-Endian order [D C B A] # [A B C D] -> [D C] [B A]  
 
-## Supported read types (from umodbus)
+## Supported read types (from uModbus)
 ### Modbus function code 01, FC01: [Read Coils](https://umodbus.readthedocs.io/en/latest/functions.html#read-coils)
 ### Modbus function code 02, FC02: [Read Discrete Inputs](https://umodbus.readthedocs.io/en/latest/functions.html#read-discrete-inputs)
 ### Modbus function code 03, FC03: [Read Holding Registers](https://umodbus.readthedocs.io/en/latest/functions.html#read-holding-registers)
